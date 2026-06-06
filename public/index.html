@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>gbps.me — Internet Speed Test</title>
+<meta name="description" content="Test your internet speed: download, upload, ping and jitter." />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">⚡</span>
+      <h1>gbps<span>.me</span></h1>
+    </div>
+    <nav>
+      <a href="#results">Results</a>
+      <a href="#history">History</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="gauge-section">
+      <div class="gauge-wrap">
+        <svg class="gauge" viewBox="0 0 300 200">
+          <defs>
+            <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"  stop-color="#00d4ff"/>
+              <stop offset="50%" stop-color="#7b5cff"/>
+              <stop offset="100%" stop-color="#ff3cac"/>
+            </linearGradient>
+          </defs>
+          <path class="track" d="M30,180 A120,120 0 0,1 270,180" />
+          <path id="arc" class="arc" d="M30,180 A120,120 0 0,1 270,180" />
+          <text id="speedValue" class="speed-value" x="150" y="140">0.00</text>
+          <text id="speedUnit"  class="speed-unit"  x="150" y="170">Mbps</text>
+        </svg>
+        <button id="startBtn" class="start-btn">START</button>
+      </div>
+
+      <div class="phase-label" id="phaseLabel">Tap START to begin</div>
+    </section>
+
+    <section class="results" id="results">
+      <div class="card">
+        <div class="card-icon">📶</div>
+        <div class="card-label">Ping</div>
+        <div class="card-value"><span id="pingVal">—</span><span class="unit">ms</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⬇️</div>
+        <div class="card-label">Download</div>
+        <div class="card-value"><span id="dlVal">—</span><span class="unit">Mbps</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⬆️</div>
+        <div class="card-label">Upload</div>
+        <div class="card-value"><span id="ulVal">—</span><span class="unit">Mbps</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <div class="card-label">Jitter</div>
+        <div class="card-value"><span id="jitterVal">—</span><span class="unit">ms</span></div>
+      </div>
+    </section>
+
+    <section class="history" id="history">
+      <h2>Recent Tests</h2>
+      <ul id="historyList"><li class="empty">No tests yet.</li></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 <a href="https://gbps.me">gbps.me</a> — measure your connection, honestly.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
