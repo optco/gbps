@@ -57,22 +57,16 @@
     </div>
   </div>
 
-    <!-- RESULTS -->
-  <div class="results-grid">
-    <!-- 1. PING (Matches Phase 1) -->
-    <div class="result-card ping-card" id="card-ping">
-      <div class="result-label">
-        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/>
-        </svg>
-        Ping
-      </div>
-      <div class="result-val result-placeholder" id="ping-val">—</div>
-      <div class="result-unit">ms</div>
-    </div>
+  <!-- PHASE BAR -->
+  <div class="phase-bar">
+    <div class="phase-item" id="phase-ping">PING</div>
+    <div class="phase-item" id="phase-dl">DOWNLOAD</div>
+    <div class="phase-item" id="phase-ul">UPLOAD</div>
+    <div class="phase-item" id="phase-done">COMPLETE</div>
+  </div>
 
-    <!-- 2. DOWNLOAD (Matches Phase 2) -->
+  <!-- RESULTS -->
+  <div class="results-grid">
     <div class="result-card download-card" id="card-dl">
       <div class="result-label">
         <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,6 +81,32 @@
         <span class="result-gbps-unit">Gbps</span>
       </div>
     </div>
+    <div class="result-card upload-card" id="card-ul">
+      <div class="result-label">
+        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 21V9M7 11l5-5 5 5"/><path d="M5 3h14"/>
+        </svg>
+        Upload
+      </div>
+      <div class="result-val result-placeholder" id="ul-val">—</div>
+      <div class="result-unit">Mbps</div>
+      <div class="result-gbps">
+        <span class="result-gbps-val" id="ul-gbps">—</span>
+        <span class="result-gbps-unit">Gbps</span>
+      </div>
+    </div>
+    <div class="result-card ping-card" id="card-ping">
+      <div class="result-label">
+        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/>
+        </svg>
+        Ping
+      </div>
+      <div class="result-val result-placeholder" id="ping-val">—</div>
+      <div class="result-unit">ms</div>
+    </div>
+  </div> 
 
     <!-- 3. UPLOAD (Matches Phase 3) -->
     <div class="result-card upload-card" id="card-ul">
