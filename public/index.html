@@ -3,77 +3,144 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>gbps.me — Internet Speed Test</title>
-<meta name="description" content="Test your internet speed: download, upload, ping and jitter." />
+<title>gbps.me — Diagnostic Tool</title>
+<meta name="description" content="Internet speed diagnostic — download, upload, ping, jitter." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <span class="logo">⚡</span>
-      <h1>gbps<span>.me</span></h1>
+
+<header>
+  <div class="logo">
+    <span class="logo-gbps">gbps</span><span class="logo-dot">.</span><span class="logo-me">me</span>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    <span id="headerVersion">DIAGNOSTIC v2.4</span>
+  </div>
+</header>
+
+<main>
+  <!-- GAUGE -->
+  <div class="gauge-section">
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 320 200">
+        <g id="ticks"></g>
+        <path class="gauge-track" d="M 30,170 A 130,130 0 0,1 290,170"/>
+        <path class="gauge-arc"   d="M 30,170 A 130,130 0 0,1 290,170" id="gaugeArc"/>
+        <line id="needle" x1="160" y1="170" x2="160" y2="55"
+              stroke="var(--text-bright)" stroke-width="2" stroke-linecap="round"
+              transform="rotate(-90, 160, 170)" opacity="0.6"
+              style="transition: transform 0.15s linear;"/>
+        <circle cx="160" cy="170" r="6" fill="var(--text-bright)" opacity="0.8"/>
+        <circle cx="160" cy="170" r="3" fill="var(--accent)"/>
+      </svg>
     </div>
-    <nav>
-      <a href="#results">Results</a>
-      <a href="#history">History</a>
-    </nav>
-  </header>
 
-  <main>
-    <section class="gauge-section">
-      <div class="gauge-wrap">
-        <svg class="gauge" viewBox="0 0 300 200">
-          <defs>
-            <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%"  stop-color="#00d4ff"/>
-              <stop offset="50%" stop-color="#7b5cff"/>
-              <stop offset="100%" stop-color="#ff3cac"/>
-            </linearGradient>
-          </defs>
-          <path class="track" d="M30,180 A120,120 0 0,1 270,180" />
-          <path id="arc" class="arc" d="M30,180 A120,120 0 0,1 270,180" />
-          <text id="speedValue" class="speed-value" x="150" y="140">0.00</text>
-          <text id="speedUnit"  class="speed-unit"  x="150" y="170">Mbps</text>
+    <div class="speed-display">
+      <div class="speed-value" id="liveSpeed">0</div>
+      <div class="speed-units-row">
+        <span class="speed-unit-mbps">Mbps</span>
+        <span class="speed-unit-sep">/</span>
+        <span class="speed-gbps-group">
+          <span class="speed-gbps-val" id="liveGbps">0.000</span>
+          <span class="speed-gbps-unit">Gbps</span>
+        </span>
+      </div>
+      <div class="speed-label" id="speedLabel">READY</div>
+    </div>
+
+    <div class="btn-wrap">
+      <button id="startBtn">BEGIN TEST</button>
+    </div>
+  </div>
+
+  <!-- PHASE BAR -->
+  <div class="phase-bar">
+    <div class="phase-item" id="phase-ping">PING</div>
+    <div class="phase-item" id="phase-dl">DOWNLOAD</div>
+    <div class="phase-item" id="phase-ul">UPLOAD</div>
+    <div class="phase-item" id="phase-done">COMPLETE</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-grid">
+    <div class="result-card download-card" id="card-dl">
+      <div class="result-label">
+        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 3v12M7 13l5 5 5-5"/><path d="M5 21h14"/>
         </svg>
-        <button id="startBtn" class="start-btn">START</button>
+        Download
       </div>
-
-      <div class="phase-label" id="phaseLabel">Tap START to begin</div>
-    </section>
-
-    <section class="results" id="results">
-      <div class="card">
-        <div class="card-icon">📶</div>
-        <div class="card-label">Ping</div>
-        <div class="card-value"><span id="pingVal">—</span><span class="unit">ms</span></div>
+      <div class="result-val result-placeholder" id="dl-val">—</div>
+      <div class="result-unit">Mbps</div>
+      <div class="result-gbps">
+        <span class="result-gbps-val" id="dl-gbps">—</span>
+        <span class="result-gbps-unit">Gbps</span>
       </div>
-      <div class="card">
-        <div class="card-icon">⬇️</div>
-        <div class="card-label">Download</div>
-        <div class="card-value"><span id="dlVal">—</span><span class="unit">Mbps</span></div>
+    </div>
+    <div class="result-card upload-card" id="card-ul">
+      <div class="result-label">
+        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 21V9M7 11l5-5 5 5"/><path d="M5 3h14"/>
+        </svg>
+        Upload
       </div>
-      <div class="card">
-        <div class="card-icon">⬆️</div>
-        <div class="card-label">Upload</div>
-        <div class="card-value"><span id="ulVal">—</span><span class="unit">Mbps</span></div>
+      <div class="result-val result-placeholder" id="ul-val">—</div>
+      <div class="result-unit">Mbps</div>
+      <div class="result-gbps">
+        <span class="result-gbps-val" id="ul-gbps">—</span>
+        <span class="result-gbps-unit">Gbps</span>
       </div>
-      <div class="card">
-        <div class="card-icon">📊</div>
-        <div class="card-label">Jitter</div>
-        <div class="card-value"><span id="jitterVal">—</span><span class="unit">ms</span></div>
+    </div>
+    <div class="result-card ping-card" id="card-ping">
+      <div class="result-label">
+        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/>
+        </svg>
+        Ping
       </div>
-    </section>
+      <div class="result-val result-placeholder" id="ping-val">—</div>
+      <div class="result-unit">ms</div>
+    </div>
+  </div>
 
-    <section class="history" id="history">
-      <h2>Recent Tests</h2>
-      <ul id="historyList"><li class="empty">No tests yet.</li></ul>
-    </section>
-  </main>
+  <!-- CONN INFO -->
+  <div class="conn-row">
+    <div class="conn-item">
+      <div class="conn-key">Server</div>
+      <div class="conn-val" id="info-server">—</div>
+    </div>
+    <div class="conn-item">
+      <div class="conn-key">Protocol</div>
+      <div class="conn-val" id="info-proto">—</div>
+    </div>
+    <div class="conn-item">
+      <div class="conn-key">Jitter</div>
+      <div class="conn-val" id="info-jitter">—</div>
+    </div>
+    <div class="conn-item">
+      <div class="conn-key">Loss</div>
+      <div class="conn-val" id="info-loss">—</div>
+    </div>
+  </div>
 
-  <footer>
-    <p>© 2026 <a href="https://gbps.me">gbps.me</a> — measure your connection, honestly.</p>
-  </footer>
+  <!-- LOG -->
+  <div class="log-panel" id="logPanel">
+    <div class="log-entry">
+      <span class="log-ts">00:00:00</span>
+      <span class="log-msg">System ready. Press BEGIN TEST to start diagnostics.</span>
+    </div>
+  </div>
+</main>
 
-  <script src="script.js"></script>
+<footer>
+  <p>© 2026 <a href="https://gbps.me">gbps.me</a></p>
+</footer>
+
+<script src="script.js"></script>
 </body>
 </html>
