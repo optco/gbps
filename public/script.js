@@ -6,6 +6,8 @@ const liveGbps   = document.getElementById('liveGbps');
 const speedLabel = document.getElementById('speedLabel');
 const startBtn   = document.getElementById('startBtn');
 const logPanel   = document.getElementById('logPanel');
+const historyList = document.getElementById('historyList');
+const clearHistoryBtn = document.getElementById('clearHistory');
 
 const ARC_LEN   = 471;
 const MAX_SPEED = 1000; // gauge full scale = 1 Gbps
@@ -16,6 +18,66 @@ const DL_CHUNK_BYTES   = 10 * 1024 * 1024;  // 10 MB per chunk
 const DL_CHUNKS        = 3;
 const UL_CHUNK_BYTES   = 5 * 1024 * 1024;   // 5 MB per chunk
 const UL_CHUNKS        = 3;
+
+// ─── History storage ─────────────────────────────────────────
+const HISTORY_KEY = 'gbps_history';
+const MAX_HISTORY = 10;
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(list) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, MAX_HISTORY)));
+}
+
+function renderHistory() {
+  const list = loadHistory();
+  if (!list.length) {
+    historyList.innerHTML = '<div class="history-empty">No tests recorded.</div>';
+    return;
+  }
+
+  historyList.innerHTML = list.map((test, idx) => {
+    const date = new Date(test.date);
+    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return `
+      <div class="history-item">
+        <div class="history-col history-date">
+          <span class="history-key">Date</span>
+          <span class="history-val">${dateStr}</span>
+        </div>
+        <div class="history-col history-dl">
+          <span class="history-key">Download</span>
+          <span class="history-val">${test.download.toFixed(1)} Mbps</span>
+        </div>
+        <div class="history-col history-ul">
+          <span class="history-key">Upload</span>
+          <span class="history-val">${test.upload.toFixed(1)} Mbps</span>
+        </div>
+        <div class="history-col history-ping">
+          <span class="history-key">Ping</span>
+          <span class="history-val">${test.ping.toFixed(0)} ms</span>
+        </div>
+        <div class="history-col">
+          <span class="history-key">Jitter</span>
+          <span class="history-val">${test.jitter.toFixed(1)} ms</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+clearHistoryBtn.addEventListener('click', () => {
+  if (confirm('Clear all test history?')) {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  }
+});
 
 // ─── Gauge ticks (0, 100, 200, 500, 750, 1G) ────────────────
 (function drawTicks() {
@@ -286,8 +348,23 @@ async function runTest() {
   log(`RESULT  ↓ ${dlMbps.toFixed(1)} Mbps (${mbpsToGbps(dlMbps)} Gbps)  ↑ ${ulMbps.toFixed(1)} Mbps (${mbpsToGbps(ulMbps)} Gbps)  PING ${ping.toFixed(0)}ms`, 'ok');
   log('Diagnostic session complete.', 'ok');
 
+  // Save to history
+  const historyList = loadHistory();
+  historyList.unshift({
+    date: Date.now(),
+    download: dlMbps,
+    upload: ulMbps,
+    ping: ping,
+    jitter: jitter,
+  });
+  saveHistory(historyList);
+  renderHistory();
+
   startBtn.textContent = 'RUN AGAIN';
   startBtn.disabled    = false;
 }
 
 startBtn.addEventListener('click', runTest);
+
+// Initial render
+renderHistory();
