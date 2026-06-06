@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>gbps.me — Diagnostic Tool</title>
-<meta name="description" content="Internet speed diagnostic — download, upload, ping, jitter." />
+<title>gbps.me</title>
+<meta name="description" content="Internet speed diagnostic — download, upload, ping, jitter, speed test." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -57,16 +57,22 @@
     </div>
   </div>
 
-  <!-- PHASE BAR -->
-  <div class="phase-bar">
-    <div class="phase-item" id="phase-ping">PING</div>
-    <div class="phase-item" id="phase-dl">DOWNLOAD</div>
-    <div class="phase-item" id="phase-ul">UPLOAD</div>
-    <div class="phase-item" id="phase-done">COMPLETE</div>
-  </div>
-
-  <!-- RESULTS -->
+    <!-- RESULTS -->
   <div class="results-grid">
+    <!-- 1. PING (Matches Phase 1) -->
+    <div class="result-card ping-card" id="card-ping">
+      <div class="result-label">
+        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/>
+        </svg>
+        Ping
+      </div>
+      <div class="result-val result-placeholder" id="ping-val">—</div>
+      <div class="result-unit">ms</div>
+    </div>
+
+    <!-- 2. DOWNLOAD (Matches Phase 2) -->
     <div class="result-card download-card" id="card-dl">
       <div class="result-label">
         <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -81,6 +87,8 @@
         <span class="result-gbps-unit">Gbps</span>
       </div>
     </div>
+
+    <!-- 3. UPLOAD (Matches Phase 3) -->
     <div class="result-card upload-card" id="card-ul">
       <div class="result-label">
         <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -94,17 +102,6 @@
         <span class="result-gbps-val" id="ul-gbps">—</span>
         <span class="result-gbps-unit">Gbps</span>
       </div>
-    </div>
-    <div class="result-card ping-card" id="card-ping">
-      <div class="result-label">
-        <svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/>
-        </svg>
-        Ping
-      </div>
-      <div class="result-val result-placeholder" id="ping-val">—</div>
-      <div class="result-unit">ms</div>
     </div>
   </div>
 
