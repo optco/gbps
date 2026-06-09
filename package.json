@@ -1,17 +1,10 @@
 {
   "name": "gbps-me",
   "version": "1.0.0",
-  "description": "Internet speed test for gbps.me",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "dependencies": {
-    "compression": "^1.7.4",
-    "express": "^4.19.2"
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "wrangler": "^3.0.0"
   }
-}

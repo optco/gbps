@@ -1,0 +1,5 @@
+name = "gbps-me"
+compatibility_date = "2024-01-01"
+
+# Tell Cloudflare Pages to serve static files from the 'public' folder
+pages_build_output_dir = "public"
