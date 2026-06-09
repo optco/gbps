@@ -91,7 +91,10 @@ header {
   gap: 8px;
 }
 .status-dot {
-  width: 6px; height: 6px;
+  display: inline-block; /* Fixes the block-level break */
+  vertical-align: middle; /* Anchors the dot to the text baseline */
+  width: 6px; 
+  height: 6px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 8px var(--accent);
