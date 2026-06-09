@@ -75,7 +75,7 @@ header {
   text-transform: lowercase;
   display: flex;
   align-items: baseline;
-  gap: 1px;
+  gap: 0px;
 }
 .logo-gbps { color: var(--accent); }
 .logo-dot  { color: var(--text-dim); }
