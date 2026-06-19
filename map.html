@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Antipode & Timezone Explorer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/tabler-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --glass-bg: rgba(255,255,255,0.18);
+  --glass-bg2: rgba(255,255,255,0.28);
+  --glass-border: rgba(255,255,255,0.45);
+  --glass-shadow: 0 8px 32px rgba(80,120,200,0.18);
+  --txt: #0f1a2e;
+  --txt2: #3a5070;
+  --accent1: #e05020;
+  --accent2: #1060c0;
+  --accent3: #0ea890;
+  --font: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+
+html,body{
+  height:100%; font-family:var(--font);
+  background: linear-gradient(135deg,#b8d8f8 0%,#c8e8f0 30%,#d0e8ff 60%,#b0cff0 100%);
+  min-height:100vh; color:var(--txt);
+}
+
+#app{display:flex;flex-direction:column;height:100vh;min-height:540px;}
+
+/* ── Top bar ── */
+#top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;flex-shrink:0;gap:12px;flex-wrap:wrap;
+  background:var(--glass-bg2);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--glass-border);
+  box-shadow:0 2px 16px rgba(80,120,200,0.10);
+}
+#top-bar h1{
+  font-size:15px;font-weight:600;display:flex;align-items:center;gap:7px;
+  color:var(--txt);letter-spacing:-0.01em;
+}
+#top-bar h1 i{font-size:18px;color:var(--accent2);}
+#hint{font-size:12px;color:var(--txt2);font-variant-numeric:tabular-nums;}
+
+.glass-btn{
+  font-size:12px;padding:5px 14px;cursor:pointer;
+  border-radius:20px;
+  border:1px solid var(--glass-border);
+  background:var(--glass-bg2);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  color:var(--txt);display:flex;align-items:center;gap:5px;
+  transition:background .18s,box-shadow .18s;
+  box-shadow:0 2px 8px rgba(80,120,200,0.10);
+}
+.glass-btn:hover{background:rgba(255,255,255,0.45);box-shadow:0 4px 16px rgba(80,120,200,0.18);}
+
+/* ── Mode badge ── */
+#mode-badge{
+  font-size:11px;padding:4px 12px;border-radius:20px;font-weight:500;
+  background:rgba(255,255,255,0.35);border:1px solid var(--glass-border);
+  color:var(--txt2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  white-space:nowrap;
+}
+
+/* ── Main split ── */
+#main{display:flex;flex:1;min-height:0;}
+
+#map-panel{flex:1;position:relative;min-height:0;min-width:0;}
+#map{position:absolute;inset:0;}
+
+/* glass divider */
+#divider{
+  width:1px;background:var(--glass-border);flex-shrink:0;
+  box-shadow:0 0 12px rgba(255,255,255,0.4);
+}
+
+#globe-panel{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  position:relative;
+  background:linear-gradient(160deg,rgba(180,215,250,0.5),rgba(140,190,240,0.4));
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#globe-canvas{display:block;cursor:grab;filter:drop-shadow(0 8px 24px rgba(20,60,120,0.25));}
+#globe-canvas:active{cursor:grabbing;}
+
+#globe-legend{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;gap:14px;font-size:11px;color:var(--txt2);pointer-events:none;
+  white-space:nowrap;
+  background:var(--glass-bg2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--glass-border);border-radius:20px;padding:5px 14px;
+}
+.ldot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:-1px;}
+
+/* ── Info bar ── */
+#info-bar{
+  flex-shrink:0;padding:12px 16px;
+  display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;
+  min-height:100px;
+  background:var(--glass-bg);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--glass-border);
+}
+
+.icard{
+  flex:1;min-width:200px;
+  background:var(--glass-bg2);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--glass-border);
+  border-radius:14px;padding:10px 14px;
+  box-shadow:var(--glass-shadow);
+  transition:box-shadow .2s;
+}
+.icard:hover{box-shadow:0 12px 40px rgba(80,120,200,0.22);}
+
+.icard .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+.icard .place{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.icard .coord{font-size:11px;color:var(--txt2);margin-bottom:5px;font-variant-numeric:tabular-nums;}
+.icard .tz{font-size:12px;color:var(--txt);display:flex;align-items:center;gap:4px;}
+.icard .dt{font-size:12px;color:var(--txt2);margin-top:2px;font-variant-numeric:tabular-nums;}
+
+/* Distance card */
+#card-dist{
+  min-width:160px;max-width:200px;flex:0 0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.35);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--glass-border);
+  border-radius:14px;padding:12px 16px;
+  box-shadow:var(--glass-shadow);text-align:center;
+}
+#card-dist .dist-num{font-size:22px;font-weight:700;color:var(--accent3);line-height:1.1;}
+#card-dist .dist-lbl{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
+#card-dist .dist-sub{font-size:11px;color:var(--txt2);margin-top:6px;}
+
+.empty{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:13px;color:var(--txt2);gap:7px;text-align:center;padding:8px;}
+
+/* Map tweaks */
+.leaflet-container{background:#b5d0ea !important;}
+.leaflet-control-attribution{display:none !important;}
+.leaflet-control-zoom a{
+  background:var(--glass-bg2)!important;
+  backdrop-filter:blur(10px)!important;
+  border:1px solid var(--glass-border)!important;
+  color:var(--txt)!important;
+  box-shadow:var(--glass-shadow)!important;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="top-bar">
+    <h1><i class="ti ti-world-longitude" aria-hidden="true"></i> Antipode &amp; Timezone Explorer</h1>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="mode-badge">Click 1: drop pin &amp; see antipode &nbsp;·&nbsp; Click 2: compare two points</span>
+      <span id="hint" style="display:none;"></span>
+      <button class="glass-btn" id="clear-btn"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="map-panel"><div id="map"></div></div>
+    <div id="divider"></div>
+    <div id="globe-panel">
+      <canvas id="globe-canvas" width="380" height="380"></canvas>
+      <div id="globe-legend">
+        <span><span class="ldot" style="background:#e05020"></span>Pin A</span>
+        <span><span class="ldot" style="background:#1060c0"></span>Antipode / Pin B</span>
+        <span style="font-size:10px;opacity:.7;">Drag to rotate</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="info-bar">
+    <div class="icard" id="card-a">
+      <div class="empty"><i class="ti ti-map-pin"></i> Double-click the map to drop your first pin</div>
+    </div>
+    <div class="icard" id="card-b" style="display:none;"></div>
+    <div id="card-dist" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+// mode: 0=empty, 1=pin A + antipode shown, 2=pin A + pin B shown
+let mode = 0;
+let pinA = null, pinB = null;   // {lat,lng}
+let antiA = null;               // antipode of A
+let ticker = null;
+let tzA = null, tzB = null;
+
+/* ═══════════════════════════════════════
+   MAP
+═══════════════════════════════════════ */
+window.addEventListener('load', () => {
+const map = L.map('map',{zoomControl:true,attributionControl:false,doubleClickZoom:false}).setView([20,0],2);
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19
+}).addTo(map);
+setTimeout(()=>map.invalidateSize(),300);
+
+const markersGroup = L.layerGroup().addTo(map);
+const linesGroup   = L.layerGroup().addTo(map);
+
+function mkIcon(color, letter){
+  return L.divIcon({className:'',
+    html:`<div style="width:26px;height:26px;border-radius:50%;background:${color};border:3px solid rgba(255,255,255,0.9);box-shadow:0 2px 10px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:sans-serif;">${letter}</div>`,
+    iconAnchor:[13,13],iconSize:[26,26]});
+}
+
+const iA    = mkIcon('#e05020','A');
+const iB    = mkIcon('#1060c0','B');
+const iAnti = mkIcon('#1060c0','⊕');
+
+function antipode(lat,lng){ return [-lat, lng>0?lng-180:lng+180]; }
+function fmtCoord(lat,lng){
+  return `${Math.abs(lat).toFixed(3)}°${lat>=0?'N':'S'}  ${Math.abs(lng).toFixed(3)}°${lng>=0?'E':'W'}`;
+}
+
+/* Haversine distance in km */
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function fmtDist(km){
+  if(km<1) return `${Math.round(km*1000)} m`;
+  if(km<10) return `${km.toFixed(2)} km`;
+  if(km<100) return `${km.toFixed(1)} km`;
+  return `${Math.round(km).toLocaleString()} km`;
+}
+
+/* ── Reverse geocode ── */
+async function locName(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=6`,{headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    if(d?.address){
+      const a=d.address;
+      if(/ocean|sea|bay|gulf|strait/i.test(d.display_name||'')) return d.display_name.split(',')[0].trim();
+      const place=a.city||a.town||a.village||a.hamlet||a.county||a.state;
+      const country=a.country;
+      if(place&&country&&place!==country) return `${place}, ${country}`;
+      if(country) return country;
+    }
+    if(/ocean|sea/i.test(d?.display_name||'')) return d.display_name.split(',')[0].trim();
+  }catch(e){}
+  return guessOcean(lat,lng);
+}
+function guessOcean(lat,lng){
+  if(lat>70) return 'Arctic Ocean';
+  if(lat<-60) return 'Southern Ocean';
+  if(lng>-80&&lng<25&&lat>-40&&lat<70) return 'Atlantic Ocean';
+  if(lng>20&&lng<147&&lat>-40&&lat<32) return 'Indian Ocean';
+  return 'Pacific Ocean';
+}
+
+/* ── Timezone ── */
+async function getTZ(lat,lng){
+  try{
+    const r=await fetch(`https://timeapi.io/api/timezone/coordinate?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}`);
+    const d=await r.json();
+    if(d?.timeZone) return d.timeZone;
+  }catch(e){}
+  return estimateTZ(lng);
+}
+function estimateTZ(lng){
+  const o=Math.round(lng/15);
+  return o===0?'UTC':o>0?`Etc/GMT-${o}`:`Etc/GMT+${Math.abs(o)}`;
+}
+function timeInZone(tz){
+  try{return new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'long',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date());}
+  catch(e){return '';}
+}
+function tzShort(tz){
+  try{return new Intl.DateTimeFormat('en',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName')?.value||tz;}
+  catch(e){return tz;}
+}
+
+/* ── Render card ── */
+function renderCard(id,label,color,place,coord,tz){
+  const el=document.getElementById(id);
+  el.style.display='';
+  el.innerHTML=`
+    <div class="lbl" style="color:${color}"><i class="ti ti-map-pin" style="font-size:12px;"></i> ${label}</div>
+    <div class="place" title="${place}">${place}</div>
+    <div class="coord">${coord}</div>
+    <div class="tz"><i class="ti ti-clock" style="font-size:12px;color:${color};"></i>&nbsp;${tz} <span style="color:var(--txt2);font-size:11px;">(${tzShort(tz)})</span></div>
+    <div class="dt" id="${id}-time">${timeInZone(tz)}</div>`;
+}
+
+function renderDistCard(km,miles){
+  const el=document.getElementById('card-dist');
+  el.style.display='';
+  el.innerHTML=`
+    <div class="dist-num">${fmtDist(km)}</div>
+    <div class="dist-lbl">Distance</div>
+    <div class="dist-sub">${Math.round(miles).toLocaleString()} miles</div>
+    <div class="dist-sub" style="margin-top:4px;font-size:10px;color:var(--txt2);">Great-circle route</div>`;
+}
+
+/* ── Ticker ── */
+function startTicker(){
+  if(ticker) clearInterval(ticker);
+  ticker=setInterval(()=>{
+    const tzList=[{id:'card-a',tz:tzA},{id:'card-b',tz:tzB}];
+    tzList.forEach(({id,tz})=>{
+      if(!tz) return;
+      const el=document.getElementById(id+'-time');
+      if(el) el.textContent=timeInZone(tz);
+    });
+  },1000);
+}
+
+/* ── Draw map lines ── */
+function redrawLines(){
+  linesGroup.clearLayers();
+  if(!pinA) return;
+  const dest = mode===2 ? pinB : antiA;
+  if(!dest) return;
+  const dash = mode===1 ? '8,6' : null;
+  const color = mode===1 ? '#1060c0' : '#0ea890';
+  L.polyline([[pinA.lat,pinA.lng],[dest.lat,dest.lng]],{
+    color, weight:2, dashArray:dash, opacity:0.7
+  }).addTo(linesGroup);
+}
+
+/* ── Main drop handler ── */
+async function handleClick(lat,lng){
+  lat=Math.max(-89.9,Math.min(89.9,lat));
+
+  if(mode===0 || mode===2){
+    // Drop Pin A, show antipode
+    mode=1;
+    pinA={lat,lng};
+    antiA={lat:-lat, lng:lng>0?lng-180:lng+180};
+    pinB=null; tzA=null; tzB=null;
+
+    markersGroup.clearLayers();
+    L.marker([pinA.lat,pinA.lng],{icon:iA}).addTo(markersGroup);
+    L.marker([antiA.lat,antiA.lng],{icon:iAnti}).addTo(markersGroup);
+    redrawLines();
+    updateGlobe();
+
+    document.getElementById('hint').style.display='inline';
+    document.getElementById('hint').textContent='Double-click again anywhere to compare two points';
+    document.getElementById('card-a').innerHTML='<div class="empty"><i class="ti ti-loader"></i> Loading…</div>';
+    document.getElementById('card-b').style.display='none';
+    document.getElementById('card-dist').style.display='none';
+
+    const [nameA, nameAnti, tzA_] = await Promise.all([
+      locName(pinA.lat,pinA.lng),
+      locName(antiA.lat,antiA.lng),
+      getTZ(pinA.lat,pinA.lng)
+    ]);
+    tzA=tzA_;
+    renderCard('card-a','Pin A','#e05020',nameA,fmtCoord(pinA.lat,pinA.lng),tzA);
+
+    // Antipode shown in card-b
+    const tzAnti=await getTZ(antiA.lat,antiA.lng);
+    tzB=tzAnti;
+    renderCard('card-b','Antipode of A','#1060c0',nameAnti,fmtCoord(antiA.lat,antiA.lng),tzAnti);
+    document.getElementById('card-b').style.display='';
+    startTicker();
+
+  } else if(mode===1){
+    // Drop Pin B — show A vs B comparison
+    mode=2;
+    pinB={lat,lng};
+
+    markersGroup.clearLayers();
+    L.marker([pinA.lat,pinA.lng],{icon:iA}).addTo(markersGroup);
+    L.marker([pinB.lat,pinB.lng],{icon:iB}).addTo(markersGroup);
+    redrawLines();
+    updateGlobe();
+
+    document.getElementById('hint').textContent='Double-click to start over with a new Pin A';
+    document.getElementById('card-b').innerHTML='<div class="empty"><i class="ti ti-loader"></i> Loading…</div>';
+    document.getElementById('card-dist').style.display='none';
+
+    const [nameB, tzB_] = await Promise.all([
+      locName(pinB.lat,pinB.lng),
+      getTZ(pinB.lat,pinB.lng)
+    ]);
+    tzB=tzB_;
+    renderCard('card-b','Pin B','#1060c0',nameB,fmtCoord(pinB.lat,pinB.lng),tzB);
+
+    const km=haversine(pinA.lat,pinA.lng,pinB.lat,pinB.lng);
+    renderDistCard(km, km*0.621371);
+    startTicker();
+  }
+}
+
+map.on('dblclick',e=>{e.originalEvent.preventDefault();handleClick(e.latlng.lat,e.latlng.lng);});
+map.on('mousemove',e=>{
+  if(mode===0){
+    document.getElementById('mode-badge').textContent=fmtCoord(e.latlng.lat,e.latlng.lng);
+  }
+});
+map.on('mouseout',()=>{
+  if(mode===0) document.getElementById('mode-badge').textContent='Click 1: drop pin & see antipode · Click 2: compare two points';
+});
+
+document.getElementById('clear-btn').addEventListener('click',()=>{
+  mode=0; pinA=pinB=antiA=null; tzA=tzB=null;
+  if(ticker) clearInterval(ticker);
+  markersGroup.clearLayers(); linesGroup.clearLayers();
+  document.getElementById('card-a').innerHTML='<div class="empty"><i class="ti ti-map-pin"></i> Double-click the map to drop your first pin</div>';
+  document.getElementById('card-b').style.display='none';
+  document.getElementById('card-dist').style.display='none';
+  document.getElementById('hint').style.display='none';
+  document.getElementById('mode-badge').textContent='Click 1: drop pin & see antipode · Click 2: compare two points';
+  autoSpin=true;
+  updateGlobe();
+});
+
+/* ═══════════════════════════════════════
+   GLOBE
+═══════════════════════════════════════ */
+const canvas=document.getElementById('globe-canvas');
+const ctx=canvas.getContext('2d');
+let globeRot=0, tiltX=0.36;
+let dragging=false, dragStartX=0, rotStart=0, autoSpin=true;
+let landFeatures=[];
+
+/* 
+  Correct projection:
+  theta = (lng + rot) * π/180
+  but we NEGATE x so east is right on screen.
+  After many iterations the fix is:
+  x = -sin(phi)*cos(theta)  ← negate x to un-mirror
+  y =  cos(phi)
+  z =  sin(phi)*sin(theta)
+  vis = z > 0  (front hemisphere)
+*/
+function ll3d(lat,lng){
+  const phi=(90-lat)*Math.PI/180;
+  const theta=(lng+globeRot)*Math.PI/180;
+  return {
+    x: -Math.sin(phi)*Math.cos(theta),
+    y:  Math.cos(phi),
+    z:  Math.sin(phi)*Math.sin(theta)
+  };
+}
+
+function proj(v,cx,cy,R){
+  const c=Math.cos(tiltX),s=Math.sin(tiltX);
+  const y2=v.y*c-v.z*s;
+  const z2=v.y*s+v.z*c;
+  return {x:cx+v.x*R, y:cy-y2*R, z:z2, vis:z2>0};
+}
+
+function drawRing(ring,cx,cy,R){
+  let first=true;
+  for(let i=0;i<ring.length;i++){
+    const [lng,lat]=ring[i];
+    const p=proj(ll3d(lat,lng),cx,cy,R);
+    if(!p.vis){first=true;continue;}
+    first ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y);
+    first=false;
+  }
+}
+
+function updateGlobe(){
+  const W=canvas.width,H=canvas.height;
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.44;
+  ctx.clearRect(0,0,W,H);
+
+  /* Ocean */
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle='#5b9ed6';ctx.fill();
+
+  /* Clip sphere */
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.clip();
+
+  /* shading: darker on edges, lighter center */
+  const shade=ctx.createRadialGradient(cx-R*0.25,cy-R*0.25,R*0.05,cx,cy,R*1.1);
+  shade.addColorStop(0,'rgba(255,255,255,0.18)');
+  shade.addColorStop(0.6,'rgba(0,0,0,0)');
+  shade.addColorStop(1,'rgba(0,30,80,0.32)');
+  ctx.fillStyle=shade;ctx.fillRect(cx-R,cy-R,R*2,R*2);
+
+  /* Land */
+  landFeatures.forEach(feat=>{
+    const geom=feat.geometry;
+    const polys=geom.type==='Polygon'?[geom.coordinates]:geom.coordinates;
+    polys.forEach(poly=>{
+      ctx.beginPath();
+      poly.forEach(ring=>drawRing(ring,cx,cy,R));
+      ctx.fillStyle='#4d9e5a';ctx.fill();
+      ctx.strokeStyle='rgba(30,80,30,0.25)';ctx.lineWidth=0.5;ctx.stroke();
+    });
+  });
+
+  /* Graticule */
+  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=0.5;
+  for(let la=-60;la<=60;la+=30){
+    ctx.beginPath();let first=true;
+    for(let lo=-180;lo<=180;lo+=2){
+      const p=proj(ll3d(la,lo),cx,cy,R);
+      if(p.vis){first?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);first=false;}else first=true;
+    }ctx.stroke();
+  }
+  for(let lo=-180;lo<180;lo+=30){
+    ctx.beginPath();let first=true;
+    for(let la=-89;la<=89;la+=2){
+      const p=proj(ll3d(la,lo),cx,cy,R);
+      if(p.vis){first?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);first=false;}else first=true;
+    }ctx.stroke();
+  }
+
+  ctx.restore();
+
+  /* Sphere rim */
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(180,220,255,0.5)';ctx.lineWidth=1.5;ctx.stroke();
+
+  /* Pins */
+  if(mode===0) return;
+
+  const ptA=proj(ll3d(pinA.lat,pinA.lng),cx,cy,R);
+
+  let ptB=null;
+  if(mode===1){
+    ptB=proj(ll3d(antiA.lat,antiA.lng),cx,cy,R);
+  } else if(mode===2 && pinB){
+    ptB=proj(ll3d(pinB.lat,pinB.lng),cx,cy,R);
+  }
+
+  /* Line between */
+  if(ptB){
+    ctx.beginPath();ctx.moveTo(ptA.x,ptA.y);ctx.lineTo(ptB.x,ptB.y);
+    ctx.strokeStyle=mode===1?'rgba(16,96,192,0.45)':'rgba(14,168,144,0.55)';
+    ctx.lineWidth=1.5;ctx.setLineDash(mode===1?[5,5]:[]);ctx.stroke();ctx.setLineDash([]);
+  }
+
+  function dot(p,color,behind){
+    ctx.beginPath();ctx.arc(p.x,p.y,behind?4:9,0,Math.PI*2);
+    ctx.fillStyle=behind?color+'44':color;ctx.fill();
+    if(!behind){ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=2.5;ctx.stroke();}
+  }
+
+  const bColor=mode===1?'#1060c0':'#1060c0';
+  if(ptB){
+    if(!ptB.vis) dot(ptB,bColor,true);
+    if(!ptA.vis) dot(ptA,'#e05020',true);
+    if(ptB.vis)  dot(ptB,bColor,false);
+    if(ptA.vis)  dot(ptA,'#e05020',false);
+  } else {
+    if(!ptA.vis) dot(ptA,'#e05020',true);
+    if(ptA.vis)  dot(ptA,'#e05020',false);
+  }
+}
+
+/* Spin */
+(function spin(){
+  if(autoSpin&&mode===0){globeRot+=0.10;updateGlobe();}
+  requestAnimationFrame(spin);
+})();
+
+/* Drag */
+canvas.addEventListener('mousedown',e=>{dragging=true;autoSpin=false;dragStartX=e.clientX;rotStart=globeRot;});
+window.addEventListener('mouseup',()=>{dragging=false;});
+window.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  globeRot=rotStart-(e.clientX-dragStartX)*0.45;
+  updateGlobe();
+});
+canvas.addEventListener('touchstart',e=>{dragging=true;autoSpin=false;dragStartX=e.touches[0].clientX;rotStart=globeRot;},{passive:true});
+window.addEventListener('touchend',()=>{dragging=false;});
+window.addEventListener('touchmove',e=>{
+  if(!dragging)return;
+  globeRot=rotStart-(e.touches[0].clientX-dragStartX)*0.45;
+  updateGlobe();
+},{passive:true});
+
+/* Resize */
+function resizeGlobe(){
+  const panel=document.getElementById('globe-panel');
+  const sz=Math.min(panel.clientWidth,panel.clientHeight,500)*0.84;
+  canvas.width=Math.round(sz);canvas.height=Math.round(sz);
+  updateGlobe();
+}
+window.addEventListener('resize',resizeGlobe);
+setTimeout(resizeGlobe,80);
+
+/* ── Load TopoJSON land ── */
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(r=>r.json())
+  .then(topo=>{
+    const obj=topo.objects.countries;
+    const sc=topo.transform.scale, tr=topo.transform.translate;
+    function decArc(i){
+      const arc=topo.arcs[i<0?~i:i];
+      let x=0,y=0;
+      const pts=arc.map(([dx,dy])=>{x+=dx;y+=dy;return[x*sc[0]+tr[0],y*sc[1]+tr[1]];});
+      if(i<0) pts.reverse();
+      return pts;
+    }
+    landFeatures=obj.geometries.map(g=>{
+      if(g.type==='Polygon') return {geometry:{type:'Polygon',coordinates:g.arcs.map(r=>r.flatMap(a=>decArc(a)))}};
+      if(g.type==='MultiPolygon') return {geometry:{type:'MultiPolygon',coordinates:g.arcs.map(p=>p.map(r=>r.flatMap(a=>decArc(a))))}};
+      return null;
+    }).filter(Boolean);
+    updateGlobe();
+  })
+  .catch(()=>updateGlobe());
+}); // end window load
+</script>
+</body>
+</html>
